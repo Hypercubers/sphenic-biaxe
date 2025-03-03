@@ -74,13 +74,13 @@ impl eframe::App for App {
                 ui.group(|ui| {
                     ui.set_width(ui.available_width());
                     ui.strong("Interaction");
-                    self.prefs.show(ui);
+                    self.prefs.show_interaction_prefs(ui);
                 });
 
                 ui.group(|ui| {
                     ui.set_width(ui.available_width());
                     ui.strong("Visuals");
-                    egui::widgets::global_theme_preference_buttons(ui);
+                    self.prefs.show_visuals_prefs(ui);
                 });
 
                 ui.group(|ui| {

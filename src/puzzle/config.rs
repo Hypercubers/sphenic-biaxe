@@ -75,6 +75,9 @@ impl PuzzleConfig {
     pub fn midpoint_x(self) -> f32 {
         self.radius(A) + polygon_apothem(self.a + CONSERVATIVENESS)
     }
+    pub fn midpoint(self) -> Vec2 {
+        vec2(self.midpoint_x(), self.height() * 0.5)
+    }
     pub fn size(self) -> Vec2 {
         vec2(self.width(), self.height())
     }
@@ -142,6 +145,10 @@ impl PuzzleConfig {
         } else {
             self.b_sticker_color(i - self.a + 1, brightness)
         }
+    }
+
+    pub fn sticker_name(self, i: u32) -> String {
+        (i + 1).to_string()
     }
 }
 

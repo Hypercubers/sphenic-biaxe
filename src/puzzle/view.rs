@@ -20,7 +20,7 @@ pub struct PuzzleView {
     #[serde(skip)]
     last_frame_time: Option<Instant>,
 
-    a: f32,
+    show_labels: bool,
 }
 
 impl PuzzleView {
@@ -144,7 +144,7 @@ impl PuzzleView {
         };
         let mut is_second = false;
         for g in grip_draw_order {
-            self.draw_grip(ui, g, is_second, rect, scale);
+            self.draw_grip(ui, g, is_second, rect, scale, prefs);
             // Draw non-hovered grips if something is moving.
             if moving_grip.is_some() {
                 if hovered_grip != Some(g) {
@@ -174,11 +174,10 @@ impl PuzzleView {
         draw_intersection: bool,
         rect: Rect,
         scale: f32,
+        prefs: &Preferences,
     ) {
         let cfg = self.config;
         let Some(state) = &self.state else { return };
-
-        let p = ui.painter();
 
         let center = cfg.center(grip);
         let radius = cfg.radius(grip);
@@ -212,19 +211,36 @@ impl PuzzleView {
             None => state,
         };
 
+        let show_label = |ui: &mut Ui, i, pos, angle| {
+            ui.put(
+                Rect::from_center_size(transform(pos, angle), vec2(50.0, 50.0)),
+                Label::new(
+                    WidgetText::from(format!(" {} ", cfg.sticker_name(i)))
+                        .color(Color32::WHITE)
+                        .background_color(Color32::BLACK),
+                )
+                .selectable(false),
+            );
+        };
+
         // Draw sectors.
         if cfg.color_sectors(grip) {
             let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
             for i in 0..cfg.n(grip) {
                 let j = (visual_state.rot(grip) + i) % cfg.n(grip);
-                p.add(Shape::convex_polygon(
-                    make_sector(get_angle(i)),
+                let angle = get_angle(i);
+                ui.painter().add(Shape::convex_polygon(
+                    make_sector(angle),
                     cfg.sticker_color_within_grip(grip, j, 0.8),
                     sector_stroke,
                 ));
+                if prefs.show_labels {
+                    let pos = crate::util::lerp(center, cfg.midpoint(), 1.0 / 3.0);
+                    show_label(ui, j, pos, angle);
+                }
             }
         } else {
-            p.circle_filled(
+            ui.painter().circle_filled(
                 transform(center, 0.0),
                 radius * scale,
                 ui.visuals().code_bg_color,
@@ -235,11 +251,16 @@ impl PuzzleView {
         let make_sphene = |angle| init_sphene.iter().map(|&p| transform(p, angle)).collect();
         for i in 0..cfg.n(grip) {
             if i > 0 || draw_intersection {
-                p.add(Shape::convex_polygon(
-                    make_sphene(get_angle(i)),
-                    cfg.sticker_color(visual_state.pieces(grip)[i as usize], 1.0),
+                let angle = get_angle(i);
+                let sticker = visual_state.pieces(grip)[i as usize];
+                ui.painter().add(Shape::convex_polygon(
+                    make_sphene(angle),
+                    cfg.sticker_color(sticker, 1.0),
                     sticker_stroke,
                 ));
+                if prefs.show_labels {
+                    show_label(ui, sticker, cfg.midpoint(), angle);
+                }
             }
         }
     }
