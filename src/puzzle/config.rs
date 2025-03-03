@@ -125,31 +125,49 @@ impl PuzzleConfig {
         sector_points(TAU / self.n(grip) as f32).map(move |p| self.center(grip) + p * radius * sign)
     }
 
-    pub fn sticker_color_within_grip(self, grip: Grip, i: u32, brightness: f32) -> Color32 {
-        match grip {
-            A => self.a_sticker_color(i, brightness),
-            B => self.b_sticker_color(i, brightness),
+    fn shared_color(self, brightness: f32, dark_mode: bool) -> Color32 {
+        if self.b == 2 {
+            sample_rainbow(0, 1, brightness * 0.5)
+        } else {
+            sample_rainbow(0, 1, brightness * if dark_mode { 0.45 } else { 0.65 })
         }
     }
-
-    fn a_sticker_color(self, i: u32, brightness: f32) -> Color32 {
-        sample_rainbow(i, self.a, brightness * 0.5)
-    }
-    fn b_sticker_color(self, i: u32, brightness: f32) -> Color32 {
+    fn a_color(self, i: u32, brightness: f32, dark_mode: bool) -> Color32 {
         if i == 0 {
-            self.a_sticker_color(0, brightness)
+            self.shared_color(brightness, dark_mode)
+        } else {
+            sample_rainbow(i, self.a, brightness * 0.5)
+        }
+    }
+    fn b_color(self, i: u32, brightness: f32, dark_mode: bool) -> Color32 {
+        if i == 0 {
+            self.shared_color(brightness, dark_mode)
         } else if self.b == 2 {
             Color32::DARK_GRAY
         } else {
-            sample_rainbow(i, self.b, brightness * 0.125)
+            sample_rainbow(i, self.b, brightness * if dark_mode { 0.25 } else { 0.75 })
         }
     }
 
-    pub fn sticker_color(self, i: u32, brightness: f32) -> Color32 {
+    pub fn color(self, i: u32, brightness: f32, dark_mode: bool) -> Color32 {
         if i < self.a {
-            self.a_sticker_color(i, brightness)
+            self.a_color(i, brightness, dark_mode)
         } else {
-            self.b_sticker_color(i - self.a + 1, brightness)
+            self.b_color(i - self.a + 1, brightness, dark_mode)
+        }
+    }
+    pub fn sticker_color(self, i: u32, dark_mode: bool) -> Color32 {
+        self.color(i, if dark_mode { 1.0 } else { 0.85 }, dark_mode)
+    }
+    pub fn sector_color(self, i: u32, dark_mode: bool) -> Color32 {
+        self.color(i, if dark_mode { 0.9 } else { 0.9 }, dark_mode)
+    }
+
+    pub fn color_index_in_grip(self, grip: Grip, i: u32) -> u32 {
+        if grip == B && i > 0 {
+            i + self.a - 1
+        } else {
+            i
         }
     }
 

@@ -317,9 +317,10 @@ impl PuzzleView {
                 j = (j + visual_state.rot(grip)) % cfg.n(grip);
                 angle += grip_offset;
             }
+            let color_index = cfg.color_index_in_grip(grip, j);
             ui.painter().add(Shape::convex_polygon(
                 make_sector(angle),
-                cfg.sticker_color_within_grip(grip, j, 0.8),
+                cfg.sector_color(color_index, ui.visuals().dark_mode),
                 sector_stroke,
             ));
             if prefs.show_labels {
@@ -336,7 +337,7 @@ impl PuzzleView {
                 let sticker = visual_state.pieces(grip)[i as usize];
                 ui.painter().add(Shape::convex_polygon(
                     make_sphene(angle),
-                    cfg.sticker_color(sticker, 1.0),
+                    cfg.sticker_color(sticker, ui.visuals().dark_mode),
                     sticker_stroke,
                 ));
                 if prefs.show_labels {
