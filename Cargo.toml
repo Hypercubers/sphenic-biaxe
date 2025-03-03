@@ -44,10 +44,9 @@ eframe = { version = "0.31", default-features = false, features = [
     "wayland",       # To support Linux (and CI)
 ] }
 log = "0.4"
-rand = "0.9"
+rand = { version = "0.9", default-features = false, features = ["std_rng"] }
 serde = { version = "1", features = ["derive"] }
 web-time = "1.1"
-
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

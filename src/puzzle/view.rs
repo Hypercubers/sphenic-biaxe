@@ -1,7 +1,10 @@
-use std::f32::consts::{PI, TAU};
+use std::{
+    f32::consts::{PI, TAU},
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use egui::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 use web_time::{Duration, Instant};
 
 use super::{Grip, PuzzleConfig, PuzzleState, TwistAnimation, TwistAnimationState, TwistDir};
@@ -32,11 +35,18 @@ impl PuzzleView {
     pub fn scramble(&mut self) {
         self.reset();
         let state = self.state.insert(PuzzleState::new(self.config));
-        let mut rng = rand::rng();
+
+        // this is awful seeding but it's fine for this puzzle and I couldn't
+        // get `getrandom` to work on web
+        let mut h = DefaultHasher::new();
+        Instant::now().hash(&mut h);
+        let bytes = h.finish().to_ne_bytes();
+        let mut rng = rand::rngs::StdRng::from_seed([bytes; 4].as_flattened().try_into().unwrap());
         for _ in 0..500 {
             state.twist_cw(Grip::A, rng.random_range(0..state.n(Grip::A)));
             state.twist_cw(Grip::B, rng.random_range(0..state.n(Grip::B)));
         }
+
         self.was_scrambled = true;
     }
 
