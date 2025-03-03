@@ -69,6 +69,15 @@ impl eframe::App for App {
                     ui.set_width(ui.available_width());
                     ui.strong("Puzzle");
                     self.puzzle.show_config(ui);
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        if ui.button("Scramble").clicked() {
+                            self.puzzle.scramble();
+                        }
+                        if ui.button("Reset").clicked() {
+                            self.puzzle.reset();
+                        }
+                    })
                 });
 
                 ui.group(|ui| {

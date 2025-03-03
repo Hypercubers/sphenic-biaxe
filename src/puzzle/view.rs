@@ -1,6 +1,7 @@
 use std::f32::consts::TAU;
 
 use egui::*;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use web_time::{Duration, Instant};
 
@@ -14,7 +15,6 @@ pub struct PuzzleView {
     config: PuzzleConfig,
     state: Option<PuzzleState>,
 
-    state_queue: Vec<PuzzleState>,
     #[serde(skip)]
     animation: TwistAnimationState,
     #[serde(skip)]
@@ -24,6 +24,21 @@ pub struct PuzzleView {
 }
 
 impl PuzzleView {
+    pub fn reset(&mut self) {
+        self.state = None;
+        self.animation = TwistAnimationState::default();
+    }
+
+    pub fn scramble(&mut self) {
+        self.reset();
+        let state = self.state.insert(PuzzleState::new(self.config));
+        let mut rng = rand::rng();
+        for _ in 0..500 {
+            state.twist_cw(Grip::A, rng.random_range(0..state.n(Grip::A)));
+            state.twist_cw(Grip::B, rng.random_range(0..state.n(Grip::B)));
+        }
+    }
+
     pub fn show_config(&mut self, ui: &mut Ui) {
         let mut changed = false;
 
@@ -47,8 +62,7 @@ impl PuzzleView {
             .clicked();
 
         if changed {
-            self.state = None;
-            self.animation = TwistAnimationState::default();
+            self.reset();
         }
     }
 
