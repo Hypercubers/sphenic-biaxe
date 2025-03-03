@@ -5,6 +5,7 @@ use std::collections::VecDeque;
 use web_time::Duration;
 
 use super::{Grip, PuzzleState};
+use crate::Preferences;
 
 /// If at least this much of a twist is animated in one frame, just skip the
 /// animation to reduce unnecessary flashing.
@@ -12,9 +13,6 @@ const MIN_TWIST_DELTA: f32 = 1.0 / 3.0;
 
 /// Higher number means faster exponential increase in twist speed.
 const EXP_TWIST_FACTOR: f32 = 0.2;
-
-/// Twist duration in seconds.
-const TWIST_DURATION: f32 = 0.3;
 
 /// Whether to speed up twists if there are more in the queue.
 const DYNAMIC_TWIST_SPEED: bool = true;
@@ -31,14 +29,14 @@ pub struct TwistAnimationState {
 impl TwistAnimationState {
     /// Steps the animation forward. Returns whether the puzzle should be
     /// redrawn next frame.
-    pub fn proceed(&mut self, delta: Duration) -> bool {
+    pub fn proceed(&mut self, delta: Duration, prefs: &Preferences) -> bool {
         if self.queue.is_empty() {
             self.queue_max = 0;
             false // Do not request redraw
         } else {
             // `twist_duration` is in seconds (per one twist); `base_speed` is
             // fraction of twist per frame.
-            let base_speed = delta.as_secs_f32() / TWIST_DURATION;
+            let base_speed = delta.as_secs_f32() / prefs.twist_duration;
 
             // Twist exponentially faster if there are/were more twists in the
             // queue.

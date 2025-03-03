@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use web_time::{Duration, Instant};
 
 use super::{Grip, PuzzleConfig, PuzzleState, TwistAnimation, TwistAnimationState, TwistDir};
+use crate::Preferences;
 
 const ASSUMED_FPS: f32 = 120.0;
 
@@ -23,15 +24,29 @@ pub struct PuzzleView {
 }
 
 impl PuzzleView {
-    pub fn draw(&mut self, ui: &mut Ui) {
+    pub fn show_config(&mut self, ui: &mut Ui) {
         let mut changed = false;
-        changed |= ui.add(Slider::new(&mut self.config.a, 2..=16)).changed();
-        changed |= ui.add(Slider::new(&mut self.config.b, 2..=16)).changed();
+
+        ui.horizontal(|ui| {
+            changed |= ui
+                .add(Slider::new(&mut self.config.a, 2..=16).logarithmic(true))
+                .changed();
+            ui.label("Left");
+        });
+        ui.horizontal(|ui| {
+            changed |= ui
+                .add(Slider::new(&mut self.config.b, 2..=16).logarithmic(true))
+                .changed();
+            ui.label("Right");
+        });
+
         if changed {
             self.state = None;
             self.animation = TwistAnimationState::default();
         }
+    }
 
+    pub fn show_puzzle(&mut self, ui: &mut Ui, prefs: &Preferences) {
         let desired_size = self.config.size();
 
         let available = ui.available_size_before_wrap();
@@ -48,7 +63,7 @@ impl PuzzleView {
         self.state.get_or_insert_with(|| PuzzleState::new(cfg));
 
         // Compute hovered grip.
-        let r = ui.interact(rect, egui::Id::new("puzzle"), egui::Sense::click());
+        let r = ui.interact(rect, Id::new("puzzle"), Sense::click());
         let hovered_grip = r
             .hover_pos()
             .map(|p| (p - rect.min) / scale)
@@ -85,7 +100,7 @@ impl PuzzleView {
                         .iter()
                         .filter_map(|ev| match ev {
                             Event::MouseWheel {
-                                unit: egui::MouseWheelUnit::Line | egui::MouseWheelUnit::Page,
+                                unit: MouseWheelUnit::Line | MouseWheelUnit::Page,
                                 delta,
                                 modifiers: _,
                             } => Some((delta.x + delta.y).signum() as i32),
@@ -107,7 +122,7 @@ impl PuzzleView {
             Some(then) => now - then,
             None => Duration::from_secs_f32(1.0 / ASSUMED_FPS),
         };
-        if self.animation.proceed(delta) {
+        if self.animation.proceed(delta, prefs) {
             ui.ctx().request_repaint();
             self.last_frame_time = Some(now);
         } else {
@@ -148,7 +163,7 @@ impl PuzzleView {
 
     fn draw_grip(
         &mut self,
-        ui: &mut egui::Ui,
+        ui: &mut Ui,
         grip: Grip,
         draw_intersection: bool,
         rect: Rect,
@@ -194,7 +209,7 @@ impl PuzzleView {
         let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
         for i in 0..cfg.n(grip) {
             let j = (visual_state.rot(grip) + i) % cfg.n(grip);
-            p.add(egui::Shape::convex_polygon(
+            p.add(Shape::convex_polygon(
                 make_sector(get_angle(i)),
                 cfg.sticker_color_within_grip(grip, j, 0.8),
                 sector_stroke,
@@ -205,7 +220,7 @@ impl PuzzleView {
         let make_sphene = |angle| init_sphene.iter().map(|&p| transform(p, angle)).collect();
         for i in 0..cfg.n(grip) {
             if i > 0 || draw_intersection {
-                p.add(egui::Shape::convex_polygon(
+                p.add(Shape::convex_polygon(
                     make_sphene(get_angle(i)),
                     cfg.sticker_color(visual_state.pieces(grip)[i as usize], 1.0),
                     sticker_stroke,
