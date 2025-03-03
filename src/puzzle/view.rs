@@ -216,8 +216,8 @@ impl PuzzleView {
                 Rect::from_center_size(transform(pos, angle), vec2(50.0, 50.0)),
                 Label::new(
                     WidgetText::from(format!(" {} ", cfg.sticker_name(i)))
-                        .color(Color32::WHITE)
-                        .background_color(Color32::BLACK),
+                        .color(ui.visuals().strong_text_color())
+                        .background_color(ui.visuals().panel_fill.gamma_multiply(0.8)),
                 )
                 .selectable(false),
             );
