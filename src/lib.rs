@@ -1,9 +1,6 @@
-#![warn(clippy::all, rust_2018_idioms)]
-
 mod app;
 mod puzzle;
-mod setup;
+mod util;
 
 pub use app::App;
-pub use puzzle::PuzzleState;
-pub use setup::PuzzleSetup;
+pub use puzzle::*;

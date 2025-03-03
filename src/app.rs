@@ -1,19 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{PuzzleSetup, PuzzleState};
+use crate::PuzzleView;
 
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
 pub struct App {
-    pub puzzle: PuzzleSetup,
-    pub state: Option<PuzzleState>,
+    pub puzzle: PuzzleView,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
-            puzzle: PuzzleSetup::default(),
-            state: None,
+            puzzle: PuzzleView::default(),
         }
     }
 }
@@ -36,10 +34,11 @@ impl eframe::App for App {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
-    /// Called each time the UI needs repainting, which may be many times per second.
+    /// Called each time the UI needs repainting, which may be many times per
+    /// second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`,
+        // `Window` or `Area`. For inspiration and more examples, go to https://emilk.github.io/egui
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -67,7 +66,7 @@ impl eframe::App for App {
                 egui::warn_if_debug_build(ui);
                 ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     ui.heading("Sphenic Biaxe");
-                    crate::puzzle::draw(self, ui);
+                    self.puzzle.draw(ui);
                 });
             });
         });

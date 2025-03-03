@@ -7,16 +7,18 @@ const CONSERVATIVENESS: u32 = 1;
 const POLYGON_RESOLUTION: u32 = 100;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq)]
-pub struct PuzzleSetup {
+pub struct PuzzleConfig {
     pub a: u32,
     pub b: u32,
 }
-impl Default for PuzzleSetup {
+
+impl Default for PuzzleConfig {
     fn default() -> Self {
         Self { a: 5, b: 3 }
     }
 }
-impl PuzzleSetup {
+
+impl PuzzleConfig {
     pub fn a_radius(self) -> f32 {
         polygon_circumradius(self.a + CONSERVATIVENESS)
     }
@@ -115,7 +117,8 @@ fn sector_points(angle: f32) -> impl Iterator<Item = Vec2> {
         .chain([Vec2::ZERO])
 }
 
-/// Samples a rainbow with `n` colors at index `i`. `lightness` ranges from 0 to 1, with 0.5 being default.
+/// Samples a rainbow with `n` colors at index `i`. `lightness` ranges from 0 to
+/// 1, with 0.5 being default.
 fn sample_rainbow(i: u32, n: u32, lightness: f32) -> Color32 {
     let colorous::Color { r, g, b } = colorous::RAINBOW.eval_rational(i as usize, n as usize);
     let blend_color = if lightness > 0.5 {
