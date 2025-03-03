@@ -13,7 +13,7 @@ pub struct App {
 impl App {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        cc.egui_ctx.set_zoom_factor(2.0);
+        cc.egui_ctx.set_zoom_factor(1.25);
         cc.egui_ctx
             .style_mut(|style| style.spacing.scroll = egui::style::ScrollStyle::solid());
 
@@ -59,78 +59,72 @@ impl eframe::App for App {
         });
 
         egui::SidePanel::right("left_panel")
-            .exact_width(250.0)
+            .exact_width(f32::min(400.0, ctx.available_rect().width() / 3.0))
             .resizable(false)
             .frame(egui::Frame::central_panel(&ctx.style()))
             .show(ctx, |ui| {
-                egui::ScrollArea::vertical()
-                    .auto_shrink(true)
-                    .show(ui, |ui| {
-                        ui.heading("Configuration");
+                egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+                    ui.heading("Configuration");
 
-                        ui.add_space(ui.spacing().item_spacing.y);
+                    ui.add_space(ui.spacing().item_spacing.y);
 
-                        ui.group(|ui| {
-                            ui.set_width(ui.available_width());
-                            ui.strong("Puzzle");
-                            self.puzzle.show_config(ui);
-                            ui.separator();
-                            ui.horizontal(|ui| {
-                                if ui.button("Scramble").clicked() {
-                                    self.puzzle.scramble();
-                                }
-                                if ui.button("Reset").clicked() {
-                                    self.puzzle.reset();
-                                }
-                            })
-                        });
-
-                        ui.group(|ui| {
-                            ui.set_width(ui.available_width());
-                            ui.strong("Interaction");
-                            self.prefs.show_interaction_prefs(ui);
-                        });
-
-                        ui.group(|ui| {
-                            ui.set_width(ui.available_width());
-                            ui.strong("Visuals");
-                            self.prefs.show_visuals_prefs(ui);
-                        });
-
-                        ui.group(|ui| {
-                            ui.set_width(ui.available_width());
-                            ui.strong("Controls");
-                            ui.horizontal(|ui| {
-                                ui.label("Keyboard controls:");
-                                for key in ["D", "F", "J", "K"] {
-                                    ui.add(
-                                        egui::Button::new(key)
-                                            .sense(egui::Sense::empty())
-                                            .fill(egui::Color32::TRANSPARENT)
-                                            .stroke(ui.visuals().noninteractive().fg_stroke),
-                                    );
-                                }
-                            });
-                            ui.add_space(ui.spacing().item_spacing.y);
-                            ui.label("Left click or scroll up to rotate counterclockwise");
-                            ui.add_space(ui.spacing().item_spacing.y);
-                            ui.label("Right click or scroll down to rotate clockwise");
-                        });
-
-                        ui.group(|ui| {
-                            ui.set_width(ui.available_width());
-                            ui.strong("Solved state");
-                            ui.label("The center has the dot piece.");
-                            ui.add_space(ui.spacing().item_spacing.y);
-                            ui.label(
-                                "The left circle has letters increasing clockwise from the dot.",
-                            );
-                            ui.add_space(ui.spacing().item_spacing.y);
-                            ui.label(
-                                "The right circle has numbers increasing clockwise from the dot.",
-                            );
-                        });
+                    ui.group(|ui| {
+                        ui.set_width(ui.available_width());
+                        ui.strong("Puzzle");
+                        self.puzzle.show_config(ui);
+                        ui.separator();
+                        ui.horizontal(|ui| {
+                            if ui.button("Scramble").clicked() {
+                                self.puzzle.scramble();
+                            }
+                            if ui.button("Reset").clicked() {
+                                self.puzzle.reset();
+                            }
+                        })
                     });
+
+                    ui.group(|ui| {
+                        ui.set_width(ui.available_width());
+                        ui.strong("Interaction");
+                        self.prefs.show_interaction_prefs(ui);
+                    });
+
+                    ui.group(|ui| {
+                        ui.set_width(ui.available_width());
+                        ui.strong("Visuals");
+                        self.prefs.show_visuals_prefs(ui);
+                    });
+
+                    ui.group(|ui| {
+                        ui.set_width(ui.available_width());
+                        ui.strong("Controls");
+                        ui.horizontal(|ui| {
+                            ui.label("Keyboard controls:");
+                            for key in ["D", "F", "J", "K"] {
+                                ui.add(
+                                    egui::Button::new(key)
+                                        .sense(egui::Sense::empty())
+                                        .fill(egui::Color32::TRANSPARENT)
+                                        .stroke(ui.visuals().noninteractive().fg_stroke),
+                                );
+                            }
+                        });
+                        ui.add_space(ui.spacing().item_spacing.y);
+                        ui.label("Left click or scroll up to rotate counterclockwise");
+                        ui.add_space(ui.spacing().item_spacing.y);
+                        ui.label("Right click or scroll down to rotate clockwise");
+                    });
+
+                    ui.group(|ui| {
+                        ui.set_width(ui.available_width());
+                        ui.strong("Solved state");
+                        ui.label("The center has the dot piece");
+                        ui.add_space(ui.spacing().item_spacing.y);
+                        ui.label("The left circle has letters increasing clockwise from the dot");
+                        ui.add_space(ui.spacing().item_spacing.y);
+                        ui.label("The right circle has numbers increasing clockwise from the dot");
+                    });
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
