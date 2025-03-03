@@ -160,7 +160,7 @@ impl PuzzleConfig {
         self.color(i, if dark_mode { 1.0 } else { 0.85 }, dark_mode)
     }
     pub fn sector_color(self, i: u32, dark_mode: bool) -> Color32 {
-        self.color(i, if dark_mode { 0.9 } else { 0.9 }, dark_mode)
+        self.color(i, 0.9, dark_mode)
     }
 
     pub fn color_index_in_grip(self, grip: Grip, i: u32) -> u32 {
