@@ -211,11 +211,11 @@ impl PuzzleView {
             None => state,
         };
 
-        let show_label = |ui: &mut Ui, i, pos, angle| {
+        let show_label = |ui: &mut Ui, text, pos, angle| {
             ui.put(
                 Rect::from_center_size(transform(pos, angle), vec2(50.0, 50.0)),
                 Label::new(
-                    WidgetText::from(format!(" {} ", cfg.sticker_name(i)))
+                    WidgetText::from(format!(" {text} "))
                         .color(ui.visuals().strong_text_color())
                         .background_color(ui.visuals().panel_fill.gamma_multiply(0.8)),
                 )
@@ -236,7 +236,7 @@ impl PuzzleView {
                 ));
                 if prefs.show_labels {
                     let pos = crate::util::lerp(center, cfg.midpoint(), 1.0 / 3.0);
-                    show_label(ui, j, pos, angle);
+                    show_label(ui, cfg.sector_name(grip, j), pos, angle);
                 }
             }
         } else {
@@ -259,7 +259,7 @@ impl PuzzleView {
                     sticker_stroke,
                 ));
                 if prefs.show_labels {
-                    show_label(ui, sticker, cfg.midpoint(), angle);
+                    show_label(ui, cfg.sticker_name(sticker), cfg.midpoint(), angle);
                 }
             }
         }

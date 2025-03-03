@@ -147,8 +147,24 @@ impl PuzzleConfig {
         }
     }
 
+    pub fn sector_name(self, grip: Grip, i: u32) -> String {
+        if i == 0 {
+            return "•".to_string();
+        }
+        match grip {
+            A => (('A' as u8 + i as u8 - 1) as char).to_string(),
+            B => i.to_string(),
+        }
+    }
     pub fn sticker_name(self, i: u32) -> String {
-        (i + 1).to_string()
+        if i == 0 {
+            return "•".to_string();
+        }
+        if i < self.n(A) {
+            (('A' as u8 + i as u8 - 1) as char).to_string()
+        } else {
+            (i - self.n(A) + 1).to_string()
+        }
     }
 }
 
