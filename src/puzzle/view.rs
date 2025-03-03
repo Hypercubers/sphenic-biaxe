@@ -219,23 +219,22 @@ impl PuzzleView {
         let radius = cfg.radius(grip);
         let center = cfg.center(grip);
 
-        // Define strokes.
-        let grip_stroke = Stroke {
-            width: 0.01 * scale,
-            color: ui.visuals().strong_text_color(),
-        };
-        let hovered_grip_stroke = Stroke {
-            width: 0.015 * scale,
-            color: Color32::RED,
+        let stroke = if is_hovered {
+            Stroke {
+                width: 0.015 * scale,
+                color: Color32::RED,
+            }
+        } else {
+            Stroke {
+                width: 0.01 * scale,
+                color: ui.visuals().strong_text_color(),
+            }
         };
 
         ui.painter().circle_stroke(
             rect.min + center * scale,
-            radius * scale * 0.995,
-            match is_hovered {
-                true => hovered_grip_stroke,
-                false => grip_stroke,
-            },
+            radius * scale - stroke.width / 2.0,
+            stroke,
         );
     }
 
