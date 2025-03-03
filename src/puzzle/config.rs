@@ -3,8 +3,11 @@ use std::f32::consts::{PI, TAU};
 use egui::*;
 use serde::{Deserialize, Serialize};
 
+use super::Grip;
+use super::Grip::{A, B};
+
 const CONSERVATIVENESS: u32 = 1;
-const POLYGON_RESOLUTION: u32 = 100;
+const POLYGON_RESOLUTION: u32 = 200;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq)]
 pub struct PuzzleConfig {
@@ -19,79 +22,109 @@ impl Default for PuzzleConfig {
 }
 
 impl PuzzleConfig {
-    pub fn a_radius(self) -> f32 {
-        polygon_circumradius(self.a + CONSERVATIVENESS)
+    pub fn n(self, grip: Grip) -> u32 {
+        match grip {
+            Grip::A => self.a,
+            Grip::B => self.b,
+        }
     }
-    pub fn b_radius(self) -> f32 {
-        polygon_circumradius(self.b + CONSERVATIVENESS)
+    pub fn radius(self, grip: Grip) -> f32 {
+        polygon_circumradius(self.n(grip) + CONSERVATIVENESS)
+    }
+    pub fn radius_sq(self, grip: Grip) -> f32 {
+        let r = self.radius(grip);
+        r * r
+    }
+    pub fn center(self, grip: Grip) -> Vec2 {
+        match grip {
+            A => vec2(self.radius(A), self.height() * 0.5),
+            B => vec2(self.width() - self.radius(B), self.height() * 0.5),
+        }
+    }
+    pub fn is_hovered(self, grip: Grip, cursor: Vec2) -> bool {
+        (cursor - self.center(grip)).length_sq() < self.radius(grip) * self.radius(grip)
+            && match grip {
+                A => cursor.x < self.midpoint_x(),
+                B => cursor.x >= self.midpoint_x(),
+            }
     }
 
     pub fn height(self) -> f32 {
-        f32::max(self.a_radius(), self.b_radius()) * 2.0
+        f32::max(self.radius(A), self.radius(B)) * 2.0
     }
     pub fn width(self) -> f32 {
-        self.a_radius()
-            + self.b_radius()
+        self.radius(A)
+            + self.radius(B)
             + polygon_apothem(self.a + CONSERVATIVENESS)
             + polygon_apothem(self.b + CONSERVATIVENESS)
     }
     pub fn midpoint_x(self) -> f32 {
-        self.a_radius() + polygon_apothem(self.a + CONSERVATIVENESS)
+        self.radius(A) + polygon_apothem(self.a + CONSERVATIVENESS)
     }
     pub fn size(self) -> Vec2 {
         vec2(self.width(), self.height())
     }
 
-    pub fn a_center(self) -> Vec2 {
-        vec2(self.a_radius(), self.height() * 0.5)
-    }
-    pub fn b_center(self) -> Vec2 {
-        vec2(self.width() - self.b_radius(), self.height() * 0.5)
-    }
-
-    pub fn hovers_a(self, p: Vec2) -> bool {
-        (p - self.a_center()).length_sq() < self.a_radius() * self.a_radius()
-            && p.x < self.midpoint_x()
-    }
-    pub fn hovers_b(self, p: Vec2) -> bool {
-        (p - self.b_center()).length_sq() < self.b_radius() * self.b_radius()
-            && p.x > self.midpoint_x()
+    pub fn hovered_grip(self, cursor: Vec2) -> Option<Grip> {
+        Option::or(
+            self.is_hovered(A, cursor).then_some(Grip::A),
+            self.is_hovered(B, cursor).then_some(Grip::B),
+        )
     }
 
     pub fn sphene_points(self) -> Vec<Vec2> {
         let mut points = vec![];
 
-        let r2 = self.a_radius() * self.a_radius();
         let resolution = POLYGON_RESOLUTION / self.a;
         for i in 0..resolution {
             let y = i as f32 / resolution as f32 - 0.5;
-            let x = self.a_center().x + (r2 - y * y).sqrt();
+            let x = self.center(A).x + (self.radius_sq(A) - y * y).sqrt();
             points.push(vec2(x, y + self.height() * 0.5));
         }
 
-        let r2 = self.b_radius() * self.b_radius();
         let resolution = POLYGON_RESOLUTION / self.b;
         for i in 0..resolution {
             let y = -(i as f32 / resolution as f32 - 0.5);
-            let x = self.b_center().x - (r2 - y * y).sqrt();
+            let x = self.center(B).x - (self.radius_sq(B) - y * y).sqrt();
             points.push(vec2(x, y + self.height() * 0.5));
         }
 
         points
     }
 
-    pub fn a_sector_points(self) -> impl Iterator<Item = Vec2> {
-        sector_points(TAU / self.a as f32).map(move |p| self.a_center() + p * self.a_radius())
-    }
-    pub fn b_sector_points(self) -> impl Iterator<Item = Vec2> {
-        sector_points(TAU / self.b as f32).map(move |p| self.b_center() - p * self.b_radius())
+    pub fn sector_points(self, grip: Grip) -> impl Iterator<Item = Vec2> {
+        let sign = match grip {
+            A => 1.0,
+            B => -1.0,
+        };
+
+        sector_points(TAU / self.n(grip) as f32)
+            .map(move |p| self.center(grip) + p * self.radius(grip) * sign)
     }
 
-    pub fn sticker_color(self, i: u32, lightness: f32) -> Color32 {
-        if i < self.a {
-            sample_rainbow(i, self.a, lightness * 0.5)
+    pub fn sticker_color_within_grip(self, grip: Grip, i: u32, brightness: f32) -> Color32 {
+        match grip {
+            A => self.a_sticker_color(i, brightness),
+            B => self.b_sticker_color(i, brightness),
+        }
+    }
+
+    fn a_sticker_color(self, i: u32, brightness: f32) -> Color32 {
+        sample_rainbow(i, self.a, brightness * 0.5)
+    }
+    fn b_sticker_color(self, i: u32, brightness: f32) -> Color32 {
+        if i == 0 {
+            self.a_sticker_color(0, brightness)
         } else {
-            sample_rainbow(i - self.a + 1, self.b, lightness * 0.125)
+            sample_rainbow(i, self.b, brightness * 0.125)
+        }
+    }
+
+    pub fn sticker_color(self, i: u32, brightness: f32) -> Color32 {
+        if i < self.a {
+            self.a_sticker_color(i, brightness)
+        } else {
+            self.b_sticker_color(i - self.a + 1, brightness)
         }
     }
 }
