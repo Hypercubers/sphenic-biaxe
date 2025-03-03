@@ -115,6 +115,8 @@ impl PuzzleConfig {
     fn b_sticker_color(self, i: u32, brightness: f32) -> Color32 {
         if i == 0 {
             self.a_sticker_color(0, brightness)
+        } else if self.b == 2 {
+            Color32::DARK_GRAY
         } else {
             sample_rainbow(i, self.b, brightness * 0.125)
         }
