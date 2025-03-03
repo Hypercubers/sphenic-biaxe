@@ -33,28 +33,24 @@ impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per
     /// second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`,
-        // `Window` or `Area`. For inspiration and more examples, go to https://emilk.github.io/egui
+        let is_web = cfg!(target_arch = "wasm32");
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
+        if !is_web {
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    // no File->Quit on web pages
+                    if !is_web {
+                        ui.menu_button("File", |ui| {
+                            if ui.button("Quit").clicked() {
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                        });
+                    }
 
-            egui::menu::bar(ui, |ui| {
-                // NOTE: no File->Quit on web pages!
-                let is_web = cfg!(target_arch = "wasm32");
-                if !is_web {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    });
-                }
-
-                egui::widgets::global_theme_preference_buttons(ui);
-
-                egui::warn_if_debug_build(ui);
+                    egui::warn_if_debug_build(ui);
+                });
             });
-        });
+        }
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             powered_by_egui_and_eframe(ui);
@@ -79,6 +75,12 @@ impl eframe::App for App {
                     ui.set_width(ui.available_width());
                     ui.strong("Interaction");
                     self.prefs.show(ui);
+                });
+
+                ui.group(|ui| {
+                    ui.set_width(ui.available_width());
+                    ui.strong("Visuals");
+                    egui::widgets::global_theme_preference_buttons(ui);
                 });
             });
 
