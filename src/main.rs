@@ -45,7 +45,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(eframe_template::TemplateApp::new(cc)))),
+                Box::new(|cc| Ok(Box::new(sphenic_biaxe::App::new(cc)))),
             )
             .await;
 
