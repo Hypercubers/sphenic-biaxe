@@ -158,7 +158,7 @@ impl PuzzleConfig {
             return "•".to_string();
         }
         match grip {
-            A => (('A' as u8 + i as u8 - 1) as char).to_string(),
+            A => ((b'A' + i as u8 - 1) as char).to_string(),
             B => i.to_string(),
         }
     }
@@ -167,7 +167,7 @@ impl PuzzleConfig {
             return "•".to_string();
         }
         if i < self.n(A) {
-            (('A' as u8 + i as u8 - 1) as char).to_string()
+            ((b'A' + i as u8 - 1) as char).to_string()
         } else {
             (i - self.n(A) + 1).to_string()
         }

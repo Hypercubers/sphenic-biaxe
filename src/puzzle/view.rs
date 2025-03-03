@@ -41,7 +41,12 @@ impl PuzzleView {
         let mut h = DefaultHasher::new();
         Instant::now().hash(&mut h);
         let bytes = h.finish().to_ne_bytes();
-        let mut rng = rand::rngs::StdRng::from_seed([bytes; 4].as_flattened().try_into().unwrap());
+        let mut rng = rand::rngs::StdRng::from_seed(
+            [bytes; 4]
+                .as_flattened()
+                .try_into()
+                .expect("error casting [[u8; 8]; 4] to [u8; 32]"),
+        );
         for _ in 0..500 {
             state.twist_cw(Grip::A, rng.random_range(0..state.n(Grip::A)));
             state.twist_cw(Grip::B, rng.random_range(0..state.n(Grip::B)));
@@ -215,10 +220,8 @@ impl PuzzleView {
         for g in grip_draw_order {
             self.draw_grip(ui, g, is_second, rect, scale, prefs);
             // Draw non-hovered grips if something is moving.
-            if moving_grip.is_some() {
-                if hovered_grip != Some(g) {
-                    self.draw_grip_circle(ui, g, false, rect, scale);
-                }
+            if moving_grip.is_some() && hovered_grip != Some(g) {
+                self.draw_grip_circle(ui, g, false, rect, scale);
             }
             is_second = true;
         }

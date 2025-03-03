@@ -1,10 +1,15 @@
 [package]
 name = "sphenic_biaxe"
+description = "Sphenic biaxe puzzle simulator"
 version = "0.1.0"
 authors = ["Andrew Farkas"]
 edition = "2024"
-include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
+homepage = "https://hypercubing.xyz/sphenic-biaxe/"
+repository = "https://github.com/Hypercubers/sphenic-biaxe"
 rust-version = "1.85"
+keywords = ["cubing", "hypercubing", "rubik", "game", "2d"]
+categories = ["games", "mathematics", "simulation"]
+license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]
 all-features = true
