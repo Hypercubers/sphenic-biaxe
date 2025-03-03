@@ -13,11 +13,18 @@ const POLYGON_RESOLUTION: u32 = 200;
 pub struct PuzzleConfig {
     pub a: u32,
     pub b: u32,
+    pub color_a_sectors: bool,
+    pub color_b_sectors: bool,
 }
 
 impl Default for PuzzleConfig {
     fn default() -> Self {
-        Self { a: 5, b: 3 }
+        Self {
+            a: 5,
+            b: 3,
+            color_a_sectors: true,
+            color_b_sectors: true,
+        }
     }
 }
 
@@ -47,6 +54,13 @@ impl PuzzleConfig {
                 A => cursor.x < self.midpoint_x(),
                 B => cursor.x >= self.midpoint_x(),
             }
+    }
+
+    pub fn color_sectors(self, grip: Grip) -> bool {
+        match grip {
+            A => self.color_a_sectors,
+            B => self.color_b_sectors,
+        }
     }
 
     pub fn height(self) -> f32 {

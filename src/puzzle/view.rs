@@ -39,6 +39,12 @@ impl PuzzleView {
                 .changed();
             ui.label("Right");
         });
+        changed |= ui
+            .checkbox(&mut self.config.color_a_sectors, "Color left sectors")
+            .clicked();
+        changed |= ui
+            .checkbox(&mut self.config.color_b_sectors, "Color right sectors")
+            .clicked();
 
         if changed {
             self.state = None;
@@ -175,6 +181,7 @@ impl PuzzleView {
         let p = ui.painter();
 
         let center = cfg.center(grip);
+        let radius = cfg.radius(grip);
 
         let transform = |p: Vec2, angle: f32| rect.min + rotate_point(p, center, angle) * scale;
 
@@ -206,14 +213,22 @@ impl PuzzleView {
         };
 
         // Draw sectors.
-        let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
-        for i in 0..cfg.n(grip) {
-            let j = (visual_state.rot(grip) + i) % cfg.n(grip);
-            p.add(Shape::convex_polygon(
-                make_sector(get_angle(i)),
-                cfg.sticker_color_within_grip(grip, j, 0.8),
-                sector_stroke,
-            ));
+        if cfg.color_sectors(grip) {
+            let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
+            for i in 0..cfg.n(grip) {
+                let j = (visual_state.rot(grip) + i) % cfg.n(grip);
+                p.add(Shape::convex_polygon(
+                    make_sector(get_angle(i)),
+                    cfg.sticker_color_within_grip(grip, j, 0.8),
+                    sector_stroke,
+                ));
+            }
+        } else {
+            p.circle_filled(
+                transform(center, 0.0),
+                radius * scale,
+                ui.visuals().code_bg_color,
+            );
         }
 
         // Draw sphenes
