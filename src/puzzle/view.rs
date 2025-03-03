@@ -1,4 +1,4 @@
-use std::f32::consts::TAU;
+use std::f32::consts::{PI, TAU};
 
 use egui::*;
 use rand::Rng;
@@ -17,6 +17,9 @@ pub struct PuzzleView {
 
     animation: TwistAnimationState,
     last_frame_time: Option<Instant>,
+
+    drag_start: Option<Pos2>,
+    drag_angle_offset: Option<(Grip, f32)>,
 }
 
 impl PuzzleView {
@@ -90,9 +93,10 @@ impl PuzzleView {
         self.state.get_or_insert_with(|| PuzzleState::new(cfg));
 
         // Compute hovered grip.
-        let r = ui.interact(rect, Id::new("puzzle"), Sense::click());
-        let hovered_grip = r
-            .hover_pos()
+        let r = ui.interact(rect, Id::new("puzzle"), Sense::click_and_drag());
+        let hovered_grip = self
+            .drag_start
+            .or(r.hover_pos())
             .map(|p| (p - rect.min) / scale)
             .and_then(|cursor_pos| self.config.hovered_grip(cursor_pos));
 
@@ -116,7 +120,38 @@ impl PuzzleView {
             }
         });
 
-        // Handle mouse twists.
+        // Handle drag twists.
+        if r.drag_started() {
+            self.drag_start = r.hover_pos();
+        }
+        if r.drag_stopped() || r.dragged() && r.hover_pos().is_none() {
+            if let Some((grip, angle)) = self.drag_angle_offset {
+                let amt = (angle / (TAU / cfg.n(grip) as f32)).round() as i32;
+                if amt < 0 {
+                    self.twist_with_initial_angle(grip, TwistDir::Ccw, -angle, (-amt) as u32);
+                } else {
+                    self.twist_with_initial_angle(grip, TwistDir::Cw, -angle, amt as u32);
+                }
+            }
+        }
+        if r.dragged() && r.hover_pos().is_some() {
+            self.animation = TwistAnimationState::default(); // cancel animations
+            if let Some(grip) = hovered_grip {
+                if let Some(drag_start) = self.drag_start {
+                    let drag_end = r.hover_pos().unwrap_or(drag_start);
+                    let center = rect.min + cfg.center(grip) * scale;
+                    let init_angle = (drag_start - center).angle();
+                    let final_angle = (drag_end - center).angle();
+                    let angle_delta = final_angle - init_angle;
+                    self.drag_angle_offset = Some((grip, angle_delta));
+                }
+            }
+        } else {
+            self.drag_start = None;
+            self.drag_angle_offset = None;
+        }
+
+        // Handle click & scroll twists.
         if let Some(grip) = hovered_grip {
             let amt = r.clicked() as i32
                 + -(r.secondary_clicked() as i32)
@@ -156,7 +191,10 @@ impl PuzzleView {
             self.last_frame_time = None;
         }
 
-        let moving_grip = self.animation.current().map(|(anim, _)| anim.grip);
+        let moving_grip = Option::or(
+            self.drag_angle_offset.map(|(g, _)| g),
+            self.animation.current().map(|(anim, _)| anim.grip),
+        );
 
         // Draw the moving circle on top of non-moving circle.
         let grip_draw_order = match moving_grip {
@@ -223,6 +261,11 @@ impl PuzzleView {
                 // Negate because positive angles are clockwise in egui
                 grip_offset =
                     -crate::util::animate_twist_angle(anim.initial_angle, anim.final_angle, t);
+            }
+        }
+        if let Some((g, offset)) = self.drag_angle_offset {
+            if g == grip {
+                grip_offset = offset;
             }
         }
         let get_angle = |i: u32| i as f32 * TAU / cfg.n(grip) as f32;
@@ -315,20 +358,37 @@ impl PuzzleView {
     }
 
     fn twist(&mut self, grip: Grip, direction: TwistDir, amt: u32) {
+        self.twist_with_initial_angle(grip, direction, 0.0, amt);
+    }
+
+    fn twist_with_initial_angle(
+        &mut self,
+        grip: Grip,
+        direction: TwistDir,
+        initial_angle: f32,
+        amt: u32,
+    ) {
         if let Some(state) = &mut self.state {
             let old_state = state.clone();
             match direction {
                 TwistDir::Cw => state.twist_cw(grip, amt),
                 TwistDir::Ccw => state.twist_ccw(grip, amt),
             }
+            let mut final_angle = match grip {
+                Grip::A => TAU / self.config.a as f32 * direction.to_f32() * amt as f32,
+                Grip::B => TAU / self.config.b as f32 * direction.to_f32() * amt as f32,
+            };
+            if initial_angle + PI < final_angle {
+                final_angle -= TAU;
+            }
+            if initial_angle - PI > final_angle {
+                final_angle += TAU;
+            }
             self.animation.push(TwistAnimation {
                 state: old_state,
                 grip,
-                initial_angle: 0.0,
-                final_angle: match grip {
-                    Grip::A => TAU / self.config.a as f32 * direction.to_f32() * amt as f32,
-                    Grip::B => TAU / self.config.b as f32 * direction.to_f32() * amt as f32,
-                },
+                initial_angle,
+                final_angle,
             });
         }
     }
