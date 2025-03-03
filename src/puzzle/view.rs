@@ -2,7 +2,6 @@ use std::f32::consts::TAU;
 
 use egui::*;
 use rand::Rng;
-use serde::{Deserialize, Serialize};
 use web_time::{Duration, Instant};
 
 use super::{Grip, PuzzleConfig, PuzzleState, TwistAnimation, TwistAnimationState, TwistDir};
@@ -10,23 +9,21 @@ use crate::Preferences;
 
 const ASSUMED_FPS: f32 = 120.0;
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PuzzleView {
     config: PuzzleConfig,
     state: Option<PuzzleState>,
+    was_scrambled: bool,
 
-    #[serde(skip)]
     animation: TwistAnimationState,
-    #[serde(skip)]
     last_frame_time: Option<Instant>,
-
-    show_labels: bool,
 }
 
 impl PuzzleView {
     pub fn reset(&mut self) {
         self.state = None;
         self.animation = TwistAnimationState::default();
+        self.was_scrambled = false;
     }
 
     pub fn scramble(&mut self) {
@@ -37,6 +34,16 @@ impl PuzzleView {
             state.twist_cw(Grip::A, rng.random_range(0..state.n(Grip::A)));
             state.twist_cw(Grip::B, rng.random_range(0..state.n(Grip::B)));
         }
+        self.was_scrambled = true;
+    }
+
+    pub fn was_scrambled(&self) -> bool {
+        self.was_scrambled
+    }
+    pub fn is_solved(&self) -> bool {
+        self.state
+            .as_ref()
+            .is_some_and(|state| state.is_solved(self.config))
     }
 
     pub fn show_config(&mut self, ui: &mut Ui) {

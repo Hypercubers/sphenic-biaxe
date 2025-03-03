@@ -134,11 +134,16 @@ impl eframe::App for App {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                    ui.heading("Sphenic Biaxe Puzzle");
-                    self.puzzle.show_puzzle(ui, &self.prefs);
+            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    if self.puzzle.was_scrambled() && self.puzzle.is_solved() {
+                        ui.heading("Solved!");
+                    }
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                        ui.heading("Sphenic Biaxe Puzzle");
+                    });
                 });
+                self.puzzle.show_puzzle(ui, &self.prefs);
             });
         });
     }

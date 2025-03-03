@@ -72,4 +72,16 @@ impl PuzzleState {
         self.a_pieces[0] = p;
         self.b_pieces[0] = p;
     }
+
+    pub fn is_solved(&self, config: PuzzleConfig) -> bool {
+        let init = Self::new(config);
+        let mut this = self.clone();
+        if !config.color_a_sectors {
+            this.a_rot = 0;
+        }
+        if !config.color_b_sectors {
+            this.b_rot = 0;
+        }
+        this == init
+    }
 }
