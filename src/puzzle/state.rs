@@ -76,10 +76,10 @@ impl PuzzleState {
     pub fn is_solved(&self, config: PuzzleConfig) -> bool {
         let init = Self::new(config);
         let mut this = self.clone();
-        if !config.color_a_sectors {
+        if config.a_axis_stationary {
             this.a_rot = 0;
         }
-        if !config.color_b_sectors {
+        if config.b_axis_stationary {
             this.b_rot = 0;
         }
         this == init

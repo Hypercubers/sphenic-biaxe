@@ -62,10 +62,10 @@ impl PuzzleView {
             ui.label("Right");
         });
         changed |= ui
-            .checkbox(&mut self.config.color_a_sectors, "Color left sectors")
+            .checkbox(&mut self.config.a_axis_stationary, "Left axis stationary")
             .clicked();
         changed |= ui
-            .checkbox(&mut self.config.color_b_sectors, "Color right sectors")
+            .checkbox(&mut self.config.b_axis_stationary, "Right axis stationary")
             .clicked();
 
         if changed {
@@ -225,7 +225,7 @@ impl PuzzleView {
                     -crate::util::animate_twist_angle(anim.initial_angle, anim.final_angle, t);
             }
         }
-        let get_angle = |i: u32| grip_offset + i as f32 * TAU / cfg.n(grip) as f32;
+        let get_angle = |i: u32| i as f32 * TAU / cfg.n(grip) as f32;
 
         let visual_state = match self.animation.current() {
             Some((anim, _)) => &anim.state,
@@ -244,23 +244,7 @@ impl PuzzleView {
             );
         };
 
-        // Draw sectors.
-        if cfg.color_sectors(grip) {
-            let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
-            for i in 0..cfg.n(grip) {
-                let j = (visual_state.rot(grip) + i) % cfg.n(grip);
-                let angle = get_angle(i);
-                ui.painter().add(Shape::convex_polygon(
-                    make_sector(angle),
-                    cfg.sticker_color_within_grip(grip, j, 0.8),
-                    sector_stroke,
-                ));
-                if prefs.show_labels {
-                    let pos = crate::util::lerp(center, cfg.midpoint(), 1.0 / 3.0);
-                    show_label(ui, cfg.sector_name(grip, j), pos, angle);
-                }
-            }
-        } else {
+        if cfg.axis_stationary(grip) {
             ui.painter().circle_filled(
                 transform(center, 0.0),
                 radius * scale,
@@ -268,11 +252,31 @@ impl PuzzleView {
             );
         }
 
+        // Draw sectors.
+        let make_sector = |angle| init_sector.iter().map(|&p| transform(p, angle)).collect();
+        for i in 0..cfg.n(grip) {
+            let mut j = i;
+            let mut angle = get_angle(i);
+            if !cfg.axis_stationary(grip) {
+                j = (j + visual_state.rot(grip)) % cfg.n(grip);
+                angle += grip_offset;
+            }
+            ui.painter().add(Shape::convex_polygon(
+                make_sector(angle),
+                cfg.sticker_color_within_grip(grip, j, 0.8),
+                sector_stroke,
+            ));
+            if prefs.show_labels {
+                let pos = crate::util::lerp(center, cfg.midpoint(), 1.0 / 3.0);
+                show_label(ui, cfg.sector_name(grip, j), pos, angle);
+            }
+        }
+
         // Draw sphenes
         let make_sphene = |angle| init_sphene.iter().map(|&p| transform(p, angle)).collect();
         for i in 0..cfg.n(grip) {
             if i > 0 || draw_intersection {
-                let angle = get_angle(i);
+                let angle = grip_offset + get_angle(i);
                 let sticker = visual_state.pieces(grip)[i as usize];
                 ui.painter().add(Shape::convex_polygon(
                     make_sphene(angle),

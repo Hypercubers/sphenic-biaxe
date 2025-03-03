@@ -15,6 +15,14 @@ pub enum Grip {
     A,
     B,
 }
+impl Grip {
+    pub fn other(self) -> Grip {
+        match self {
+            Grip::A => Grip::B,
+            Grip::B => Grip::A,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum TwistDir {

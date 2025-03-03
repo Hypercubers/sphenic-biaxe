@@ -13,8 +13,8 @@ const POLYGON_RESOLUTION: u32 = 200;
 pub struct PuzzleConfig {
     pub a: u32,
     pub b: u32,
-    pub color_a_sectors: bool,
-    pub color_b_sectors: bool,
+    pub a_axis_stationary: bool,
+    pub b_axis_stationary: bool,
 }
 
 impl Default for PuzzleConfig {
@@ -22,8 +22,8 @@ impl Default for PuzzleConfig {
         Self {
             a: 5,
             b: 3,
-            color_a_sectors: true,
-            color_b_sectors: true,
+            a_axis_stationary: false,
+            b_axis_stationary: false,
         }
     }
 }
@@ -56,10 +56,10 @@ impl PuzzleConfig {
             }
     }
 
-    pub fn color_sectors(self, grip: Grip) -> bool {
+    pub fn axis_stationary(self, grip: Grip) -> bool {
         match grip {
-            A => self.color_a_sectors,
-            B => self.color_b_sectors,
+            A => self.a_axis_stationary,
+            B => self.b_axis_stationary,
         }
     }
 
@@ -115,8 +115,14 @@ impl PuzzleConfig {
             B => -1.0,
         };
 
-        sector_points(TAU / self.n(grip) as f32)
-            .map(move |p| self.center(grip) + p * self.radius(grip) * sign)
+        let radius = crate::util::lerp(
+            self.radius(grip),
+            polygon_apothem(self.a + CONSERVATIVENESS) + polygon_apothem(self.b + CONSERVATIVENESS)
+                - self.radius(grip.other()),
+            if self.axis_stationary(grip) { 0.5 } else { 0.0 },
+        );
+
+        sector_points(TAU / self.n(grip) as f32).map(move |p| self.center(grip) + p * radius * sign)
     }
 
     pub fn sticker_color_within_grip(self, grip: Grip, i: u32, brightness: f32) -> Color32 {
