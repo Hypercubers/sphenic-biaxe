@@ -82,6 +82,26 @@ impl eframe::App for App {
                     ui.strong("Visuals");
                     egui::widgets::global_theme_preference_buttons(ui);
                 });
+
+                ui.group(|ui| {
+                    ui.set_width(ui.available_width());
+                    ui.strong("Controls");
+                    ui.horizontal(|ui| {
+                        ui.label("Keyboard controls:");
+                        for key in ["D", "F", "J", "K"] {
+                            ui.add(
+                                egui::Button::new(key)
+                                    .sense(egui::Sense::empty())
+                                    .fill(egui::Color32::TRANSPARENT)
+                                    .stroke(ui.visuals().noninteractive().fg_stroke),
+                            );
+                        }
+                    });
+                    ui.add_space(ui.spacing().item_spacing.y);
+                    ui.label("Left click or scroll up to rotate counterclockwise");
+                    ui.add_space(ui.spacing().item_spacing.y);
+                    ui.label("Right click or scroll down to rotate clockwise");
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
