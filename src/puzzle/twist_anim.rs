@@ -11,7 +11,7 @@ use super::{Grip, PuzzleState};
 const MIN_TWIST_DELTA: f32 = 1.0 / 3.0;
 
 /// Higher number means faster exponential increase in twist speed.
-const EXP_TWIST_FACTOR: f32 = 0.5;
+const EXP_TWIST_FACTOR: f32 = 0.2;
 
 /// Twist duration in seconds.
 const TWIST_DURATION: f32 = 0.3;

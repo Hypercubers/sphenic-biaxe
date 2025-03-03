@@ -36,31 +36,40 @@ impl PuzzleState {
         }
     }
 
-    pub fn a(&self) -> u32 {
-        self.a_pieces.len() as u32
+    fn rot_mut(&mut self, grip: Grip) -> &mut u32 {
+        match grip {
+            Grip::A => &mut self.a_rot,
+            Grip::B => &mut self.b_rot,
+        }
     }
-    pub fn b(&self) -> u32 {
-        self.b_pieces.len() as u32
+    fn pieces_mut(&mut self, grip: Grip) -> &mut [u32] {
+        match grip {
+            Grip::A => &mut self.a_pieces,
+            Grip::B => &mut self.b_pieces,
+        }
     }
 
-    pub fn twist_a_cw(&mut self) {
-        self.a_rot = (self.a_rot + self.a() - 1) % self.a();
-        self.a_pieces.rotate_right(1);
-        self.b_pieces[0] = self.a_pieces[0];
+    pub fn n(&self, grip: Grip) -> u32 {
+        self.pieces(grip).len() as u32
     }
-    pub fn twist_a_ccw(&mut self) {
-        self.a_rot = (self.a_rot + 1) % self.a();
-        self.a_pieces.rotate_left(1);
-        self.b_pieces[0] = self.a_pieces[0];
+
+    pub fn twist_ccw(&mut self, grip: Grip, amt: u32) {
+        let n = self.n(grip);
+        let amt = amt.rem_euclid(n);
+        *self.rot_mut(grip) = (self.rot(grip) + amt) % n;
+        self.pieces_mut(grip).rotate_left(amt as usize);
+        self.set_shared_piece(self.pieces(grip)[0]);
     }
-    pub fn twist_b_cw(&mut self) {
-        self.b_rot = (self.b_rot + self.b() - 1) % self.b();
-        self.b_pieces.rotate_right(1);
-        self.a_pieces[0] = self.b_pieces[0];
+    pub fn twist_cw(&mut self, grip: Grip, amt: u32) {
+        let n = self.n(grip);
+        let amt = amt.rem_euclid(n);
+        *self.rot_mut(grip) = (self.rot(grip) + n - amt) % n;
+        self.pieces_mut(grip).rotate_right(amt as usize);
+        self.set_shared_piece(self.pieces(grip)[0]);
     }
-    pub fn twist_b_ccw(&mut self) {
-        self.b_rot = (self.b_rot + 1) % self.b();
-        self.b_pieces.rotate_left(1);
-        self.a_pieces[0] = self.b_pieces[0];
+
+    fn set_shared_piece(&mut self, p: u32) {
+        self.a_pieces[0] = p;
+        self.b_pieces[0] = p;
     }
 }

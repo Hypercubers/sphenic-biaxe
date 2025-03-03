@@ -2,9 +2,11 @@ use std::f32::consts::TAU;
 
 use egui::*;
 use serde::{Deserialize, Serialize};
-use web_time::Instant;
+use web_time::{Duration, Instant};
 
 use super::{Grip, PuzzleConfig, PuzzleState, TwistAnimation, TwistAnimationState, TwistDir};
+
+const ASSUMED_FPS: f32 = 120.0;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct PuzzleView {
@@ -15,7 +17,7 @@ pub struct PuzzleView {
     #[serde(skip)]
     animation: TwistAnimationState,
     #[serde(skip)]
-    last_repaint: Option<Instant>,
+    last_frame_time: Option<Instant>,
 
     a: f32,
 }
@@ -43,7 +45,7 @@ impl PuzzleView {
 
         // Generate puzzle if necessary.
         let cfg = self.config;
-        let state = self.state.get_or_insert_with(|| PuzzleState::new(cfg));
+        self.state.get_or_insert_with(|| PuzzleState::new(cfg));
 
         // Compute hovered grip.
         let r = ui.interact(rect, egui::Id::new("puzzle"), egui::Sense::click());
@@ -52,22 +54,64 @@ impl PuzzleView {
             .map(|p| (p - rect.min) / scale)
             .and_then(|cursor_pos| self.config.hovered_grip(cursor_pos));
 
-        // Handle click twists.
+        ui.input(|input| {
+            for ev in &input.raw.events {
+                if let Event::Key {
+                    key,
+                    physical_key,
+                    pressed: true,
+                    ..
+                } = ev
+                {
+                    match physical_key.unwrap_or(*key) {
+                        Key::D => self.twist(Grip::A, TwistDir::Ccw, 1),
+                        Key::F => self.twist(Grip::A, TwistDir::Cw, 1),
+                        Key::J => self.twist(Grip::B, TwistDir::Ccw, 1),
+                        Key::K => self.twist(Grip::B, TwistDir::Cw, 1),
+                        _ => (),
+                    }
+                }
+            }
+        });
+
+        // Handle mouse twists.
         if let Some(grip) = hovered_grip {
-            if r.clicked() {
-                self.twist(grip, TwistDir::Ccw);
-            } else if r.secondary_clicked() {
-                self.twist(grip, TwistDir::Cw);
+            let amt = r.clicked() as i32
+                + -(r.secondary_clicked() as i32)
+                + ui.input(|input| {
+                    input
+                        .raw
+                        .events
+                        .iter()
+                        .filter_map(|ev| match ev {
+                            Event::MouseWheel {
+                                unit: egui::MouseWheelUnit::Line | egui::MouseWheelUnit::Page,
+                                delta,
+                                modifiers: _,
+                            } => Some((delta.x + delta.y).signum() as i32),
+                            _ => None,
+                        })
+                        .sum::<i32>()
+                });
+
+            if amt > 0 {
+                self.twist(grip, TwistDir::Ccw, amt as u32);
+            } else if amt < 0 {
+                self.twist(grip, TwistDir::Cw, (-amt) as u32);
             }
         }
 
         // Update animation state.
         let now = Instant::now();
-        let last_repaint = self.last_repaint.unwrap_or(now);
-        let time_delta = now - last_repaint;
-        self.last_repaint = Some(now);
-        if self.animation.proceed(time_delta) {
+        let delta = match self.last_frame_time {
+            Some(then) => now - then,
+            None => Duration::from_secs_f32(1.0 / ASSUMED_FPS),
+        };
+        if self.animation.proceed(delta) {
             ui.ctx().request_repaint();
+            self.last_frame_time = Some(now);
+        } else {
+            self.last_frame_time = None;
         }
 
         let moving_grip = self.animation.current().map(|(anim, _)| anim.grip);
@@ -195,22 +239,20 @@ impl PuzzleView {
         );
     }
 
-    fn twist(&mut self, grip: Grip, direction: TwistDir) {
+    fn twist(&mut self, grip: Grip, direction: TwistDir, amt: u32) {
         if let Some(state) = &mut self.state {
             let old_state = state.clone();
-            match (grip, direction) {
-                (Grip::A, TwistDir::Cw) => state.twist_a_cw(),
-                (Grip::A, TwistDir::Ccw) => state.twist_a_ccw(),
-                (Grip::B, TwistDir::Cw) => state.twist_b_cw(),
-                (Grip::B, TwistDir::Ccw) => state.twist_b_ccw(),
+            match direction {
+                TwistDir::Cw => state.twist_cw(grip, amt),
+                TwistDir::Ccw => state.twist_ccw(grip, amt),
             }
             self.animation.push(TwistAnimation {
                 state: old_state,
                 grip,
                 initial_angle: 0.0,
                 final_angle: match grip {
-                    Grip::A => TAU / self.config.a as f32 * direction.to_f32(),
-                    Grip::B => TAU / self.config.b as f32 * direction.to_f32(),
+                    Grip::A => TAU / self.config.a as f32 * direction.to_f32() * amt as f32,
+                    Grip::B => TAU / self.config.b as f32 * direction.to_f32() * amt as f32,
                 },
             });
         }
