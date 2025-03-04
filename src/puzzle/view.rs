@@ -168,7 +168,7 @@ impl PuzzleView {
 
         // Handle click & scroll twists.
         if let Some(grip) = hovered_grip {
-            if prefs.sector_click_mode && r.clicked() || r.secondary_clicked() {
+            if prefs.sector_click_mode && (r.clicked() || r.secondary_clicked()) {
                 if let Some(click_pos) = r.hover_pos() {
                     let mut angle = (click_pos - (rect.min + cfg.center(grip) * scale)).angle();
                     if grip == Grip::B {
