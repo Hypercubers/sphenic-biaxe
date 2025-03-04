@@ -40,8 +40,13 @@ impl Preferences {
             |ui, current| {
                 ui.checkbox(current, "Sector click mode").on_hover_text(
                     "\
-                    When enabled, click on a sector to rotate it to the intersection. \n\
-                    When disabled, click or right-click on a disk to twist it one step.\
+                    When enabled:
+                    • Left click on a sector to rotate it to the intersection\n\
+                    • Right click on a sector to rotate the intersection to it\n\
+                    \n\
+                    When disabled:
+                    • Left click on a disk to rotate it counterclockwise\n\
+                    • Right click on a disk to rotate it clockwise\
                     ",
                 );
             },
