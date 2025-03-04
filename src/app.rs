@@ -2,12 +2,21 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Preferences, PuzzleView};
 
+#[derive(Serialize, Deserialize, Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+enum Tab {
+    #[default]
+    Puzzle,
+    Configuration,
+}
+
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(default)]
 pub struct App {
     #[serde(skip)]
     pub puzzle: PuzzleView,
     pub prefs: Preferences,
+    #[serde(skip)]
+    tab: Tab,
 }
 
 impl App {
@@ -23,6 +32,82 @@ impl App {
         }
 
         Default::default()
+    }
+
+    fn show_configuration(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Configuration");
+
+        ui.add_space(ui.spacing().item_spacing.y);
+
+        ui.group(|ui| {
+            ui.set_width(ui.available_width());
+            ui.strong("Puzzle");
+            self.puzzle.show_config(ui);
+            ui.separator();
+            ui.horizontal(|ui| {
+                if ui.button("Scramble").clicked() {
+                    self.puzzle.scramble();
+                }
+                if ui.button("Reset").clicked() {
+                    self.puzzle.reset();
+                }
+            })
+        });
+
+        ui.group(|ui| {
+            ui.set_width(ui.available_width());
+            ui.strong("Interaction");
+            self.prefs.show_interaction_prefs(ui);
+        });
+
+        ui.group(|ui| {
+            ui.set_width(ui.available_width());
+            ui.strong("Visuals");
+            self.prefs.show_visuals_prefs(ui);
+        });
+
+        ui.group(|ui| {
+            ui.set_width(ui.available_width());
+            ui.strong("Controls");
+            ui.horizontal(|ui| {
+                ui.label("Keyboard controls:");
+                for key in ["D", "F", "J", "K"] {
+                    ui.add(
+                        egui::Button::new(key)
+                            .sense(egui::Sense::empty())
+                            .fill(egui::Color32::TRANSPARENT)
+                            .stroke(ui.visuals().noninteractive().fg_stroke),
+                    );
+                }
+            });
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label("Left click or scroll up to rotate counterclockwise");
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label("Right click or scroll down to rotate clockwise");
+        });
+
+        ui.group(|ui| {
+            ui.set_width(ui.available_width());
+            ui.strong("Solved state");
+            ui.label("The center has the dot piece");
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label("The left circle has letters increasing clockwise from the dot");
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label("The right circle has numbers increasing clockwise from the dot");
+        });
+    }
+
+    fn show_puzzle(&mut self, ui: &mut egui::Ui) {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+            if self.puzzle.was_scrambled() && self.puzzle.is_solved() {
+                ui.heading("Solved!");
+            }
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.heading("Sphenic Biaxe Puzzle");
+            });
+        });
+
+        self.puzzle.show_puzzle(ui, &self.prefs);
     }
 }
 
@@ -58,88 +143,31 @@ impl eframe::App for App {
             powered_by_egui_and_eframe(ui);
         });
 
-        egui::SidePanel::right("left_panel")
-            .exact_width(f32::min(400.0, ctx.available_rect().width() / 3.0))
-            .resizable(false)
-            .frame(egui::Frame::central_panel(&ctx.style()))
-            .show(ctx, |ui| {
-                egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
-                    ui.heading("Configuration");
-
-                    ui.add_space(ui.spacing().item_spacing.y);
-
-                    ui.group(|ui| {
-                        ui.set_width(ui.available_width());
-                        ui.strong("Puzzle");
-                        self.puzzle.show_config(ui);
-                        ui.separator();
-                        ui.horizontal(|ui| {
-                            if ui.button("Scramble").clicked() {
-                                self.puzzle.scramble();
-                            }
-                            if ui.button("Reset").clicked() {
-                                self.puzzle.reset();
-                            }
-                        })
-                    });
-
-                    ui.group(|ui| {
-                        ui.set_width(ui.available_width());
-                        ui.strong("Interaction");
-                        self.prefs.show_interaction_prefs(ui);
-                    });
-
-                    ui.group(|ui| {
-                        ui.set_width(ui.available_width());
-                        ui.strong("Visuals");
-                        self.prefs.show_visuals_prefs(ui);
-                    });
-
-                    ui.group(|ui| {
-                        ui.set_width(ui.available_width());
-                        ui.strong("Controls");
-                        ui.horizontal(|ui| {
-                            ui.label("Keyboard controls:");
-                            for key in ["D", "F", "J", "K"] {
-                                ui.add(
-                                    egui::Button::new(key)
-                                        .sense(egui::Sense::empty())
-                                        .fill(egui::Color32::TRANSPARENT)
-                                        .stroke(ui.visuals().noninteractive().fg_stroke),
-                                );
-                            }
-                        });
-                        ui.add_space(ui.spacing().item_spacing.y);
-                        ui.label("Left click or scroll up to rotate counterclockwise");
-                        ui.add_space(ui.spacing().item_spacing.y);
-                        ui.label("Right click or scroll down to rotate clockwise");
-                    });
-
-                    ui.group(|ui| {
-                        ui.set_width(ui.available_width());
-                        ui.strong("Solved state");
-                        ui.label("The center has the dot piece");
-                        ui.add_space(ui.spacing().item_spacing.y);
-                        ui.label("The left circle has letters increasing clockwise from the dot");
-                        ui.add_space(ui.spacing().item_spacing.y);
-                        ui.label("The right circle has numbers increasing clockwise from the dot");
+        let is_landscape = ctx.available_rect().aspect_ratio() > 1.0;
+        if is_landscape {
+            egui::SidePanel::right("config_panel")
+                .exact_width(f32::min(400.0, ctx.available_rect().width() / 3.0))
+                .resizable(false)
+                .frame(egui::Frame::central_panel(&ctx.style()))
+                .show(ctx, |ui| {
+                    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+                        ui.set_width(400.0);
+                        self.show_configuration(ui);
                     });
                 });
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                    if self.puzzle.was_scrambled() && self.puzzle.is_solved() {
-                        ui.heading("Solved!");
-                    }
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                        ui.heading("Sphenic Biaxe Puzzle");
+        } else {
+            egui::TopBottomPanel::bottom("config_panel")
+                .exact_height(ctx.available_rect().height() * 0.5)
+                .resizable(false)
+                .frame(egui::Frame::central_panel(&ctx.style()))
+                .show(ctx, |ui| {
+                    egui::ScrollArea::both().auto_shrink(true).show(ui, |ui| {
+                        self.show_configuration(ui);
                     });
                 });
-                self.puzzle.show_puzzle(ui, &self.prefs);
-            });
-        });
+        }
+
+        egui::CentralPanel::default().show(ctx, |ui| self.show_puzzle(ui));
     }
 }
 
