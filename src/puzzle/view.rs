@@ -168,8 +168,23 @@ impl PuzzleView {
 
         // Handle click & scroll twists.
         if let Some(grip) = hovered_grip {
-            let amt = r.clicked() as i32
-                + -(r.secondary_clicked() as i32)
+            if prefs.sector_click_mode && r.clicked() {
+                if let Some(click_pos) = r.hover_pos() {
+                    let mut angle = (click_pos - (rect.min + cfg.center(grip) * scale)).angle();
+                    if grip == Grip::B {
+                        angle += PI;
+                    }
+                    let sector = (angle / (TAU / cfg.n(grip) as f32)).round() as i32;
+                    if sector > 0 {
+                        self.twist(grip, TwistDir::Ccw, sector as u32);
+                    } else if sector < 0 {
+                        self.twist(grip, TwistDir::Cw, (-sector) as u32);
+                    }
+                }
+            }
+
+            let amt = (!prefs.sector_click_mode && r.clicked()) as i32
+                + -((!prefs.sector_click_mode && r.secondary_clicked()) as i32)
                 + ui.input(|input| {
                     input
                         .raw

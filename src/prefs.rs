@@ -3,9 +3,11 @@ use egui::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(default)]
 pub struct Preferences {
     pub twist_duration: f32,
     pub show_labels: bool,
+    pub sector_click_mode: bool,
 }
 
 impl Default for Preferences {
@@ -13,6 +15,7 @@ impl Default for Preferences {
         Self {
             twist_duration: 0.2,
             show_labels: false,
+            sector_click_mode: false,
         }
     }
 }
@@ -28,6 +31,19 @@ impl Preferences {
             |ui, current| {
                 ui.add(DragValue::new(current).range(0.0..=1.0).speed(0.01));
                 ui.label("Twist duration");
+            },
+        );
+        show_with_reset_button(
+            ui,
+            &mut self.sector_click_mode,
+            defaults.sector_click_mode,
+            |ui, current| {
+                ui.checkbox(current, "Sector click mode").on_hover_text(
+                    "\
+                    When enabled, click on a sector to rotate it to the intersection. \n\
+                    When disabled, click or right-click on a disk to twist it one step.\
+                    ",
+                );
             },
         );
     }
