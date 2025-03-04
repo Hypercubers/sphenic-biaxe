@@ -121,6 +121,7 @@ impl eframe::App for App {
     /// second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let is_web = cfg!(target_arch = "wasm32");
+        let is_landscape = ctx.available_rect().aspect_ratio() > 1.0;
 
         if !is_web {
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -140,10 +141,32 @@ impl eframe::App for App {
         }
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            powered_by_egui_and_eframe(ui);
+            let sp = std::mem::take(&mut ui.spacing_mut().item_spacing);
+            if is_landscape {
+                ui.horizontal(|ui| {
+                    egui::ScrollArea::horizontal()
+                        .auto_shrink(false)
+                        .show(ui, |ui| {
+                            show_credits(ui);
+                            ui.add_space(sp.x);
+                            ui.separator();
+                            ui.add_space(sp.x);
+                            show_powered_by_egui(ui);
+                            ui.add_space(sp.x);
+                            ui.separator();
+                            ui.add_space(sp.x);
+                            show_source_code_link(ui);
+                        })
+                });
+            } else {
+                ui.horizontal_wrapped(|ui| show_source_code_link(ui));
+                ui.separator();
+                ui.horizontal_wrapped(|ui| show_powered_by_egui(ui));
+                ui.separator();
+                ui.horizontal_wrapped(|ui| show_credits(ui));
+            }
         });
 
-        let is_landscape = ctx.available_rect().aspect_ratio() > 1.0;
         if is_landscape {
             egui::SidePanel::right("config_panel")
                 .exact_width(f32::min(400.0, ctx.available_rect().width() / 3.0))
@@ -151,7 +174,6 @@ impl eframe::App for App {
                 .frame(egui::Frame::central_panel(&ctx.style()))
                 .show(ctx, |ui| {
                     egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
-                        ui.set_width(400.0);
                         self.show_configuration(ui);
                     });
                 });
@@ -171,16 +193,24 @@ impl eframe::App for App {
     }
 }
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
+fn show_credits(ui: &mut egui::Ui) {
+    ui.label(format!("Sphenic Biaxe v{} by ", env!("CARGO_PKG_VERSION")));
+    ui.hyperlink_to("Andrew Farkas", "https://ajfarkas.dev/");
+}
+
+fn show_powered_by_egui(ui: &mut egui::Ui) {
+    ui.label("Powered by ");
+    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+    ui.label(" and ");
+    ui.hyperlink_to(
+        "eframe",
+        "https://github.com/emilk/egui/tree/master/crates/eframe",
+    );
+}
+
+fn show_source_code_link(ui: &mut egui::Ui) {
+    ui.hyperlink_to(
+        egui::RichText::new(" source code").small(),
+        env!("CARGO_PKG_REPOSITORY"),
+    );
 }
