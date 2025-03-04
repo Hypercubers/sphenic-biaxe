@@ -56,19 +56,32 @@ impl App {
 
         ui.group(|ui| {
             ui.set_width(ui.available_width());
-            ui.strong("Interaction");
-            self.prefs.show_interaction_prefs(ui);
-        });
-
-        ui.group(|ui| {
-            ui.set_width(ui.available_width());
             ui.strong("Visuals");
             self.prefs.show_visuals_prefs(ui);
         });
 
         ui.group(|ui| {
             ui.set_width(ui.available_width());
-            ui.strong("Controls");
+            ui.strong("Interaction");
+            self.prefs.show_interaction_prefs(ui);
+
+            // Click controls
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label(if self.prefs.sector_click_mode {
+                "• Left click or tap — rotate to center"
+            } else {
+                "• Left click or tap — rotate counterclockwise"
+            });
+            ui.label(if self.prefs.sector_click_mode {
+                "• Right click or long tap — rotate from center"
+            } else {
+                "• Right click or long tap — rotate clockwise"
+            });
+            ui.add_space(ui.spacing().item_spacing.y);
+            ui.label("• Scroll up — rotate counterclockwise");
+            ui.label("• Scroll down — rotate clockwise");
+
+            // Keyboard controls
             ui.horizontal(|ui| {
                 ui.label("Keyboard controls:");
                 for key in ["D", "F", "J", "K"] {
@@ -80,10 +93,6 @@ impl App {
                     );
                 }
             });
-            ui.add_space(ui.spacing().item_spacing.y);
-            ui.label("Left click or scroll up to rotate counterclockwise");
-            ui.add_space(ui.spacing().item_spacing.y);
-            ui.label("Right click or scroll down to rotate clockwise");
         });
 
         ui.group(|ui| {
