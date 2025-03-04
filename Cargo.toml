@@ -1,7 +1,7 @@
 [package]
 name = "sphenic_biaxe"
 description = "Sphenic biaxe puzzle simulator"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Andrew Farkas"]
 edition = "2024"
 homepage = "https://hypercubing.xyz/sphenic-biaxe/"
