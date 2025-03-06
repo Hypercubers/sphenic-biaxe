@@ -136,7 +136,7 @@ impl PuzzleConfig {
         if i == 0 {
             self.shared_color(brightness, dark_mode)
         } else {
-            sample_rainbow(i, self.a, brightness * 0.5)
+            sample_rainbow(self.a - i, self.a, brightness * 0.5)
         }
     }
     fn b_color(self, i: u32, brightness: f32, dark_mode: bool) -> Color32 {
