@@ -177,7 +177,7 @@ impl PuzzleConfig {
         }
         match grip {
             A => ((b'A' + i as u8 - 1) as char).to_string(),
-            B => i.to_string(),
+            B => (self.b - i).to_string(),
         }
     }
     pub fn sticker_name(self, i: u32) -> String {
@@ -187,7 +187,7 @@ impl PuzzleConfig {
         if i < self.n(A) {
             ((b'A' + i as u8 - 1) as char).to_string()
         } else {
-            (i - self.n(A) + 1).to_string()
+            (self.a + self.b - 1 - i).to_string()
         }
     }
 }
