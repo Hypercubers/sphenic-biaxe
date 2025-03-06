@@ -1,5 +1,9 @@
 # Changelog
 
+# v1.2.0
+
+- Reversed number on right side
+
 # v1.1.0
 
 - Improved sector label positioning for large sizes
