@@ -1,6 +1,6 @@
 # Changelog
 
-# UNRELEASED
+# v1.1.0
 
 - Improved sector label positioning for large sizes
 - Changed default puzzle from M5M3 to M5F2
