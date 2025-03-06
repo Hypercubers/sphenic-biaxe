@@ -342,7 +342,11 @@ impl PuzzleView {
                 sector_stroke,
             ));
             if prefs.show_labels {
-                let pos = crate::util::lerp(center, cfg.midpoint(), 1.0 / 3.0);
+                let pos = crate::util::lerp(
+                    center,
+                    cfg.midpoint(),
+                    (1.0 - (4.0 / cfg.n(grip) as f32)).at_least(1.0 / 3.0),
+                );
                 show_label(ui, cfg.sector_name(grip, j), pos, angle);
             }
         }

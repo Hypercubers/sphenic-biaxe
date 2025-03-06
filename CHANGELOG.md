@@ -1,5 +1,9 @@
 # Changelog
 
+# UNRELEASED
+
+- Improved sector label positioning for large sizes
+
 # v1.0.2
 
 - Fixed right click doing two clicks
