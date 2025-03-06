@@ -21,9 +21,9 @@ impl Default for PuzzleConfig {
     fn default() -> Self {
         Self {
             a: 5,
-            b: 3,
+            b: 2,
             a_axis_stationary: false,
-            b_axis_stationary: false,
+            b_axis_stationary: true,
         }
     }
 }
