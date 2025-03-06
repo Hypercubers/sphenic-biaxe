@@ -61,30 +61,27 @@ impl PuzzleView {
     pub fn is_solved(&self) -> bool {
         self.state
             .as_ref()
-            .is_some_and(|state| state.is_solved(self.config))
+            .is_none_or(|state| state.is_solved(self.config))
     }
 
     pub fn show_config(&mut self, ui: &mut Ui) {
         let mut changed = false;
+        let cfg = &mut self.config;
 
-        ui.horizontal(|ui| {
-            changed |= ui
-                .add(Slider::new(&mut self.config.a, 2..=16).logarithmic(true))
-                .changed();
-            ui.label("Left");
-        });
-        ui.horizontal(|ui| {
-            changed |= ui
-                .add(Slider::new(&mut self.config.b, 2..=16).logarithmic(true))
-                .changed();
-            ui.label("Right");
-        });
-        changed |= ui
-            .checkbox(&mut self.config.a_axis_stationary, "Left axis stationary")
-            .clicked();
-        changed |= ui
-            .checkbox(&mut self.config.b_axis_stationary, "Right axis stationary")
-            .clicked();
+        for (n, is_fixed, side) in [
+            (&mut cfg.a, &mut cfg.a_axis_stationary, "Left"),
+            (&mut cfg.b, &mut cfg.b_axis_stationary, "Right"),
+        ] {
+            ui.horizontal(|ui| {
+                ui.strong(format!("{side} axis"));
+                changed |= ui.selectable_value(is_fixed, true, "Fixed").changed();
+                changed |= ui.selectable_value(is_fixed, false, "Moving").changed();
+            });
+            ui.horizontal(|ui| {
+                changed |= ui.add(Slider::new(n, 2..=16).logarithmic(true)).changed();
+            });
+            ui.separator();
+        }
 
         if changed {
             self.reset();

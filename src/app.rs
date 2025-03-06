@@ -41,12 +41,13 @@ impl App {
 
         ui.group(|ui| {
             ui.set_width(ui.available_width());
-            ui.strong("Puzzle");
             self.puzzle.show_config(ui);
-            ui.separator();
             ui.horizontal(|ui| {
                 if ui.button("Scramble").clicked() {
                     self.puzzle.scramble();
+                }
+                if self.puzzle.is_solved() {
+                    ui.disable();
                 }
                 if ui.button("Reset").clicked() {
                     self.puzzle.reset();
