@@ -169,11 +169,11 @@ impl eframe::App for App {
                         })
                 });
             } else {
-                ui.horizontal_wrapped(|ui| show_source_code_link(ui));
+                ui.horizontal_wrapped(show_source_code_link);
                 ui.separator();
-                ui.horizontal_wrapped(|ui| show_powered_by_egui(ui));
+                ui.horizontal_wrapped(show_powered_by_egui);
                 ui.separator();
-                ui.horizontal_wrapped(|ui| show_credits(ui));
+                ui.horizontal_wrapped(show_credits);
             }
         });
 
