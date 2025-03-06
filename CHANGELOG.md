@@ -1,8 +1,13 @@
 # Changelog
 
+# v1.3.0
+
+- Reversed colors on left side
+    - The left and right sides are now approximately mirrored versions of each other
+
 # v1.2.0
 
-- Reversed number on right side
+- Reversed numbers on right side
 
 # v1.1.0
 
