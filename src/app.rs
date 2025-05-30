@@ -103,7 +103,7 @@ impl App {
             ui.add_space(ui.spacing().item_spacing.y);
             ui.label("The left circle has letters increasing clockwise from the dot");
             ui.add_space(ui.spacing().item_spacing.y);
-            ui.label("The right circle has numbers increasing clockwise from the dot");
+            ui.label("The right circle has numbers increasing counterclockwise from the dot");
         });
     }
 
