@@ -1,5 +1,10 @@
 # Changelog
 
+# v1.3.1
+
+- Fixed description of solved state
+- Enabled labels by default
+
 # v1.3.0
 
 - Reversed colors on left side
