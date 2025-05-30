@@ -14,7 +14,7 @@ impl Default for Preferences {
     fn default() -> Self {
         Self {
             twist_duration: 0.2,
-            show_labels: false,
+            show_labels: true,
             sector_click_mode: false,
         }
     }
